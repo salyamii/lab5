@@ -16,7 +16,8 @@ public class City {
     /** Field ID */
     @XmlElement
     private long id;
-    /** Field name */
+    /** Field name
+     *  */
     @XmlElement
     private String name;
     /** Field coordinates */
