@@ -43,16 +43,16 @@ public class CollectionManager {
         commandsInfo.put("help", " - display help for available commands");
         commandsInfo.put("info", " - print all information about collection");
         commandsInfo.put("show"," - print all elements in string representation to standard output");
-        commandsInfo.put("insert_null {element}", " - add a new element with a key");
-        commandsInfo.put("update_id {element}", " - refresh an element's value in collection (using id)");
-        commandsInfo.put("remove_key null", " - delete an element from collection by key");
+        commandsInfo.put("insert id", " - add a new element with a key");
+        commandsInfo.put("update_id id", " - refresh an element's value in collection (using id)");
+        commandsInfo.put("remove_key id", " - delete an element from collection by key");
         commandsInfo.put("clear", " - clear the collection");
         commandsInfo.put("save", " - save the collection to the file");
         commandsInfo.put("execute_script file_name", " - read and execute script from the file");
         commandsInfo.put("exit", " - exit the program (without saving)");
-        commandsInfo.put("remove_greater {element}", " - delete all elements that are greater");
-        commandsInfo.put("remove_greater_key null", " - delete all elements that have a key greater than inserted");
-        commandsInfo.put("remove_lower_key null", " - delete all elements that have a key lower than inserted");
+        commandsInfo.put("remove_greater population", " - delete all elements that are greater");
+        commandsInfo.put("remove_greater_key id", " - delete all elements that have a key greater than inserted");
+        commandsInfo.put("remove_lower_key id", " - delete all elements that have a key lower than inserted");
         commandsInfo.put("group_counting_by_population", " - group elements by population");
         commandsInfo.put("count_by_establishment_date establishmentDate", " - display amount of elements with inserted establishment date");
         commandsInfo.put("count_less_than_establishment_date establishmentDate", " - display amount of elements that have lower value of establishmentDate");
@@ -73,8 +73,7 @@ public class CollectionManager {
 
                         // create xml event reader for input stream
                         XMLInputFactory xmlInputFactory = XMLInputFactory.newInstance();
-                        XMLEventReader xmlEventReader = xmlInputFactory.createXMLEventReader((inputStream));
-
+                        XMLEventReader xmlEventReader = xmlInputFactory.createXMLEventReader(inputStream);
                         // initialize jaxb
                         JAXBContext context = JAXBContext.newInstance(City.class);
                         Unmarshaller unmarshaller = context.createUnmarshaller();
@@ -87,7 +86,7 @@ public class CollectionManager {
                         //Loop for unmarshalling collection
                         while((e = xmlEventReader.peek()) != null ) {
                             //check the event is a Document start element
-                            if(e.isStartDocument() && ((StartElement) e).getName().equals(qName)){
+                            if(e.isStartElement() && ((StartElement) e).getName().equals(qName)){
                                 //unmarshalling the document
                                 City unmarshalledCity = unmarshaller.unmarshal(xmlEventReader, City.class).getValue();
                                 Coordinates newCoordinates = unmarshalledCity.getCoordinates();
@@ -98,6 +97,7 @@ public class CollectionManager {
                                         && unmarshalledCity.getTelephoneCode() > 0 && unmarshalledCity.getTelephoneCode() <= 1000000
                                         && unmarshalledCity.getClimate() != null && unmarshalledCity.getGovernor() != null
                                         && newCoordinates.getX() > -944){
+
                                     long idCity;
                                     Random random = new Random();
                                     while(true){
@@ -109,9 +109,6 @@ public class CollectionManager {
                                     unmarshalledCity.setId(idCity);
                                     unmarshalledCity.setCreationDate(receiveCreationDate());
                                     cities.put(idCity, unmarshalledCity);
-                                    for(Map.Entry<Long, City> city : cities.entrySet()){
-                                        System.out.println(city.getValue().toString() + "\n");
-                                    }
                                     counterGood++;
                                 }
                                 else{
@@ -119,7 +116,6 @@ public class CollectionManager {
                                 }
                             } else{
                                 xmlEventReader.next();
-                                //xmlEventReader.next();
                             }
                         }
                         System.out.println("Collection was loaded successfully. " + counterGood + " elements have been loaded.");
@@ -187,6 +183,10 @@ public class CollectionManager {
 
     /** Method for printing all elements of the collection in string format */
     public void show(){
+        if(cities.isEmpty()){
+            System.out.println("Collection is empty.");
+            return;
+        }
         for(Map.Entry<Long, City> city : cities.entrySet()){
             System.out.println(city.getValue().toString() + "\n");
         }
@@ -590,9 +590,7 @@ public class CollectionManager {
 
     /** Method for clearing the collection */
     public void clear(){
-        for(Map.Entry<Long, City> city : cities.entrySet()){
-            cities.remove(city.getKey());
-        }
+        cities.clear();
         System.out.println("Collection is empty now.");
     }
 
@@ -706,13 +704,17 @@ public class CollectionManager {
                 return;
             }
             int populationMax = Integer.parseInt(strPopulation);
+            ArrayList<Long> greaterPopulationsIds = new ArrayList<>();
+
             for(Map.Entry<Long, City> city : cities.entrySet()){
                 if(city.getValue().getPopulation() > populationMax){
-                    cities.remove(city.getKey());
+                    greaterPopulationsIds.add(city.getValue().getId());
                 }
-
             }
-            System.out.println("Elements that have greater population value have been removed.");
+            System.out.println("Elements that have greater population value will be removed. Amount: " + greaterPopulationsIds.size() + ".");
+            for(int i = 0; i < greaterPopulationsIds.size(); i++){
+                cities.remove(greaterPopulationsIds.get(i));
+            }
         }
         catch(NumberFormatException numberFormatException){
             System.out.println("Value population must be int-type.");
@@ -724,13 +726,17 @@ public class CollectionManager {
     public void remove_greater_key (String k){
         try{
             k = k.trim();
+            ArrayList<Long> keys = new ArrayList<>();
             long key = Long.parseLong(k);
             for(Map.Entry<Long, City> city : cities.entrySet()){
                 if(city.getKey() > key)
-                    cities.remove(city.getKey());
+                    keys.add(city.getKey());
             }
-            System.out.println("Elements that has greater ID are removed.");
-        }catch(Exception exception){
+            System.out.println("Cities with greater keys will be removed. Amount of cities with greater keys: " + keys.size() + ".");
+            for(int i = 0; i < keys.size(); i++) {
+                cities.remove(keys.get(i));
+            }
+        }catch(NumberFormatException numberFormatException){
             System.out.println("Value must be a long-type format. Try again.");
         }
 
@@ -740,12 +746,17 @@ public class CollectionManager {
     public void remove_lower_key (String k){
         try{
             k = k.trim();
+            ArrayList<Long> keys = new ArrayList<>();
             long key = Long.parseLong(k);
             for(Map.Entry<Long, City> city : cities.entrySet()){
                 if(city.getKey() < key)
-                    cities.remove(city.getKey());
+                    keys.add(city.getKey());
             }
-        }catch(Exception exception){
+            System.out.println("Cities with lower keys will be deleted. Amount of cities with lower keys: " + keys.size() + ".");
+            for(int i = 0; i < keys.size(); i++) {
+                cities.remove(keys.get(i));
+            }
+        }catch(NumberFormatException numberFormatException){
             System.out.println("Value must be a long-type format. Try again.");
         }
 
@@ -754,17 +765,22 @@ public class CollectionManager {
     /** Method for grouping by population */
     public void group_counting_by_population(){
         HashMap<Long, Long> pop = new HashMap<Long, Long>();
-        pop = null;
         for(Map.Entry<Long, City> city : cities.entrySet()){
-            if(!pop.containsKey(city.getKey())){
-                pop.put(city.getKey(), (long) 1);
+            if(pop.get(city.getKey()) == null){
+                long key = city.getKey();
+                pop.put(key, (long) 1);
             }
             else{
+                System.out.println(city.getValue() + " " + city.getKey());
                 pop.put(city.getKey(),pop.get(city.getKey()) + 1);
             }
         }
+        if(pop.entrySet().isEmpty()){
+            System.out.println("There are no cities in collection.");
+            return;
+        }
         for(Map.Entry<Long, Long> population : pop.entrySet()){
-            System.out.println(population.getKey() + " people live in " + population.getValue() + " towns.");
+            System.out.println(population.getKey() + " people live in " + population.getValue() + " town(s).");
         }
     }
     /** Method for counting elements by establishment date */
