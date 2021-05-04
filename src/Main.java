@@ -5,7 +5,15 @@ import java.io.IOException;
 public class Main {
     public static void main(String[] args) throws IOException {
         System.out.println("Collection manager started.");
-        Commander commander = new Commander(new CollectionManager(args[0]));
+        Commander commander;
+        try{
+            commander = new Commander(new CollectionManager(args[0]));
+        }
+        catch(ArrayIndexOutOfBoundsException arrayIndexOutOfBoundsException){
+            System.out.println("Path to the file is absent. Insert it, please.");
+            args[0] = "";
+            commander = new Commander(new CollectionManager(args[0]));
+        }
         commander.interactiveMode();
     }
 }

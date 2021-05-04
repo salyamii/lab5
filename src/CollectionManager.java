@@ -153,7 +153,7 @@ public class CollectionManager {
     public boolean checkFile(String pathToFile){
         File checkingFile = new File(pathToFile);
         if(!checkingFile.exists()){
-            System.out.println("File not found. Try again.");
+            System.out.println("File not found.");
             return false;
         }
         if(!checkingFile.canRead()){
