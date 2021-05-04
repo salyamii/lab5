@@ -60,12 +60,17 @@ public class CollectionManager {
     }
 
     // Constructor for checking a path to file existence and file readiness to work
-    public CollectionManager(){
+    public CollectionManager(String path){
         Scanner in = new Scanner(System.in);
         try{
             for( ; ; ){
-                System.out.print("Enter a full path to XML file with collection: ");
-                String pathToFile = in.nextLine();
+                String pathToFile;
+                if(checkFile(path))
+                    pathToFile = path;
+                else {
+                    System.out.print("Enter a full path to XML file with collection: ");
+                    pathToFile = in.nextLine();
+                }
                 if(checkFile(pathToFile)){
                     try{
                         final QName qName = new QName("city");
@@ -98,17 +103,14 @@ public class CollectionManager {
                                         && unmarshalledCity.getClimate() != null && unmarshalledCity.getGovernor() != null
                                         && newCoordinates.getX() > -944){
 
-                                    long idCity;
-                                    Random random = new Random();
-                                    while(true){
-                                        idCity = random.nextInt(1000);
-                                        if(!cities.containsKey(idCity)){
-                                            break;
-                                        }
-                                    }
-                                    unmarshalledCity.setId(idCity);
-                                    unmarshalledCity.setCreationDate(receiveCreationDate());
-                                    cities.put(idCity, unmarshalledCity);
+                                    if(unmarshalledCity.getId() == 0)
+                                        unmarshalledCity.setId(receiveID());
+                                    if(unmarshalledCity.getCreationDate() != null)
+                                        unmarshalledCity.setCreationDate(receiveCreationDate());
+                                    if(cities.containsKey(unmarshalledCity.getId()))
+                                        System.out.println("The element in the collection with ID: "
+                                                + unmarshalledCity.getId() + " will be replaced.");
+                                    cities.put(unmarshalledCity.getId(), unmarshalledCity);
                                     counterGood++;
                                 }
                                 else{
@@ -187,6 +189,7 @@ public class CollectionManager {
             System.out.println("Collection is empty.");
             return;
         }
+        System.out.println("All elements of the collection: ");
         for(Map.Entry<Long, City> city : cities.entrySet()){
             System.out.println(city.getValue().toString() + "\n");
         }
@@ -197,7 +200,7 @@ public class CollectionManager {
      * @return long id
      */
     public long receiveID(){
-        long id = 0;
+        long id = 1;
         while(true){
             if(cities.containsKey(id)){
                 id++;
@@ -227,10 +230,6 @@ public class CollectionManager {
             catch (InputMismatchException inputMismatchException){
                 System.out.println("This value must be String.");
             }
-            catch (NoSuchElementException noSuchElementException){
-                System.out.println("Program was stopped successfully.");
-                System.exit(1);
-            }
         }
     }
 
@@ -257,10 +256,6 @@ public class CollectionManager {
             }
             catch (InputMismatchException inputMismatchException){
                 System.out.println("This value must be a float-number type. Try again.");
-            }
-            catch(NoSuchElementException noSuchElementException){
-                System.out.println("Program was stopped successfully.");
-                System.exit(1);
             }
         }
     }
@@ -297,7 +292,7 @@ public class CollectionManager {
      * @return Coordinates coordinates
      */
     public Coordinates receiveCoordinates(){
-                return new Coordinates(receiveX(), receiveY());
+        return new Coordinates(receiveX(), receiveY());
     }
 
     /**
@@ -326,7 +321,9 @@ public class CollectionManager {
             case 9:
             case 11:
                 day = (int) Math.floor(Math.random()*29+1);
+                break;
             default:
+                break;
         }
         LocalDate date = LocalDate.of(year, month, day);
         LocalTime time = LocalTime.of((int) Math.floor(Math.random()* 23), (int) Math.floor(Math.random()* 59), (int) Math.floor(Math.random()* 59));
@@ -356,10 +353,6 @@ public class CollectionManager {
             }
             catch(InputMismatchException inputMismatchException){
                 System.out.println("The value must be double type. Try again.");
-            }
-            catch (NoSuchElementException noSuchElementException) {
-                System.out.println("Program was stopped successfully.");
-                System.exit(1);
             }
         }
     }
@@ -415,10 +408,6 @@ public class CollectionManager {
             catch(InputMismatchException inputMismatchException){
                 System.out.println("Value must be float-type. Try again.");
             }
-            catch(NoSuchElementException noSuchElementException){
-                System.out.println("Program was stopped successfully. ");
-                System.exit(1);
-            }
         }
     }
 
@@ -441,7 +430,7 @@ public class CollectionManager {
                 return establishmentDate;
             } catch (InputMismatchException inputMismatchException) {
                 System.out.println("Date is a String object. Try again.");
-            } catch (Exception exception) {
+            } catch (IllegalArgumentException illegalArgumentException) {
                 System.out.println("Invalid date format. Try again.");
             }
         }
@@ -473,10 +462,6 @@ public class CollectionManager {
                 return code;
             }catch (InputMismatchException inputMismatchException){
                 System.out.println("Value of code must be int-type. Try again.");
-            }
-            catch(NoSuchElementException noSuchElementException){
-                System.out.println("Program was finished successfully.");
-                System.exit(1);
             }
         }
     }
@@ -513,10 +498,6 @@ public class CollectionManager {
             catch(InputMismatchException inputMismatchException){
                 System.out.println("This value must be a number (1, 2, 3, 4). Choose one and try again.");
             }
-            catch(NoSuchElementException noSuchElementException){
-                System.out.println("Program was finished successfully.");
-                System.exit(1);
-            }
         }
     }
 
@@ -539,25 +520,16 @@ public class CollectionManager {
             catch (DateTimeException dateTimeException){
                 System.out.println("Your data format is invalid. Try again.");
             }
-            catch(NoSuchElementException noSuchElementException){
-                System.out.println("Program was finished successfully.");
-                System.exit(1);
-            }
         }
     }
     /** Method for adding a new element with a key */
-    public void insert(String key){
-        try {
-            key = key.trim();
-            long id = Long.parseLong(key);
-            City newCity = new City(id, receiveName(), receiveCoordinates(), receiveCreationDate(), receiveArea(),
-                    receivePopulation(), receiveMetersAboveSeaLevel(), receiveEstablishmentDate(), receiveTelephoneCode(),
-                    receiveClimate(), receiveGovernor());
-            cities.put(id, newCity);
-        }
-        catch (Exception exception){
-            System.out.println("Enter a long-type value. Try again.");
-        }
+    public void insert(){
+        long id = receiveID();
+        City newCity = new City(id, receiveName(), receiveCoordinates(), receiveCreationDate(), receiveArea(),
+                receivePopulation(), receiveMetersAboveSeaLevel(), receiveEstablishmentDate(), receiveTelephoneCode(),
+                receiveClimate(), receiveGovernor());
+        cities.put(id, newCity);
+        System.out.println("A new city with " + id + " ID was inserted.");
     }
 
     /** Method for updating an element of collection */
@@ -565,13 +537,25 @@ public class CollectionManager {
         try{
             key = key.trim();
             long id = Long.parseLong(key);
-            cities.remove(id);
-            City updatedCity = new City(id, receiveName(), receiveCoordinates(), receiveCreationDate(),
-                    receiveArea(), receivePopulation(), receiveMetersAboveSeaLevel(), receiveEstablishmentDate(),
-                    receiveTelephoneCode(), receiveClimate(), receiveGovernor());
+            if(!cities.containsKey(id)){
+                System.out.println("There is no element with this ID in collection. Try another ID.");
+                return;
+            }
+            City updatedCity = cities.get(id);
+            updatedCity.setCreationDate(receiveCreationDate());
+            updatedCity.setArea(receiveArea());
+            updatedCity.setClimate(receiveClimate());
+            updatedCity.setCoordinates(receiveCoordinates());
+            updatedCity.setEstablishmentDate(receiveEstablishmentDate());
+            updatedCity.setGovernor(receiveGovernor());
+            updatedCity.setMetersAboveSeaLevel(receiveMetersAboveSeaLevel());
+            updatedCity.setPopulation(receivePopulation());
+            updatedCity.setTelephoneCode(receiveTelephoneCode());
+            updatedCity.setName(receiveName());
             cities.put(id, updatedCity);
+            System.out.println("City with " + id + " id was updated.");
         }
-        catch (Exception exception){
+        catch (NumberFormatException numberFormatException){
             System.out.println("Enter a long-type value. Try again.");
         }
     }
@@ -583,7 +567,7 @@ public class CollectionManager {
             long id = Long.parseLong(key);
             cities.remove(id);
             System.out.println("Element with an id :" + id + " removed.");
-        }catch(Exception exception){
+        }catch(NumberFormatException numberFormatException){
             System.out.println("Enter a long-type value. Try again.");
         }
     }
@@ -604,6 +588,7 @@ public class CollectionManager {
             jaxbMarshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
             //Marshal the cities list in file
             jaxbMarshaller.marshal(newCities, xmlCollection);
+            System.out.println("The collection was saved successfully!");
         }
         catch(JAXBException jaxbException){
             System.out.println("XML syntax error. Try again.");
@@ -633,7 +618,7 @@ public class CollectionManager {
                             show();
                             break;
                         case "insert":
-                            insert(finalCommand[1]);
+                            insert();
                             break;
                         case "update_id":
                             update_id(finalCommand[1]);
@@ -675,8 +660,8 @@ public class CollectionManager {
                 }
             }
         }
-        catch(NoSuchElementException | FileNotFoundException noSuchElementException){
-            System.out.println("Program will be finished now.");
+        catch(FileNotFoundException noSuchElementException){
+            System.out.println("File can't be read. Program will be finished.");
             System.exit(1);
         }
     }
@@ -685,7 +670,7 @@ public class CollectionManager {
     public void exit(){
         try{
             System.out.println("Program will be finished now.");
-            TimeUnit.SECONDS.sleep(3);
+            TimeUnit.SECONDS.sleep(1);
             System.exit(0);
         }
         catch(InterruptedException interruptedException){
