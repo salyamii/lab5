@@ -11,8 +11,7 @@ public class Main {
         }
         catch(ArrayIndexOutOfBoundsException arrayIndexOutOfBoundsException){
             System.out.println("Path to the file is absent. Insert it, please.");
-            args[0] = "";
-            commander = new Commander(new CollectionManager(args[0]));
+            commander = new Commander(new CollectionManager(""));
         }
         commander.interactiveMode();
     }
