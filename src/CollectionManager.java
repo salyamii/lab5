@@ -32,30 +32,28 @@ public class CollectionManager {
     public static final String DATE_TIME_FORMATTER = "yyyy-MM-dd HH:mm:ss";
     DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(DATE_TIME_FORMATTER);
     DateTimeFormatter formatter = DateTimeFormatter.ofPattern(DATE_FORMATTER);
-    /** HashMap collection for making a manual */
-    private final HashMap<String, String> commandsInfo;
+
+    private final ArrayList<String> helper = new ArrayList<>();
     {
         wasStart = false;
         cities = new HashMap<Long, City>();
-
-        /** Manual of commands */
-        commandsInfo = new HashMap<>();
-        commandsInfo.put("help", " - display help for available commands");
-        commandsInfo.put("info", " - print all information about collection");
-        commandsInfo.put("show"," - print all elements in string representation to standard output");
-        commandsInfo.put("insert id", " - add a new element with a key");
-        commandsInfo.put("update_id id", " - refresh an element's value in collection (using id)");
-        commandsInfo.put("remove_key id", " - delete an element from collection by key");
-        commandsInfo.put("clear", " - clear the collection");
-        commandsInfo.put("save", " - save the collection to the file");
-        commandsInfo.put("execute_script file_name", " - read and execute script from the file");
-        commandsInfo.put("exit", " - exit the program (without saving)");
-        commandsInfo.put("remove_greater population", " - delete all elements that are greater");
-        commandsInfo.put("remove_greater_key id", " - delete all elements that have a key greater than inserted");
-        commandsInfo.put("remove_lower_key id", " - delete all elements that have a key lower than inserted");
-        commandsInfo.put("group_counting_by_population", " - group elements by population");
-        commandsInfo.put("count_by_establishment_date establishmentDate", " - display amount of elements with inserted establishment date");
-        commandsInfo.put("count_less_than_establishment_date establishmentDate", " - display amount of elements that have lower value of establishmentDate");
+        /** Manual of commands *new* */
+        helper.add("help - display help for available commands.");
+        helper.add("info - print all information about collection.");
+        helper.add("show - print all elements in collection");
+        helper.add("insert - add a new element");
+        helper.add("update_id {id} - upadte an element with inserted id");
+        helper.add("remove_key {id} - delete an element from collection by key");
+        helper.add("clear - remove all elements from collection");
+        helper.add("save - saving the collection to the xml file");
+        helper.add("execute_script {file_name} - executing script from the file");
+        helper.add("exit - exit the program (without saving)");
+        helper.add("remove_greater {population} - removing elements with greater population field");
+        helper.add("remove_greater_key {id} - remove elements with greater id (key)");
+        helper.add("remove_lower_key {id} - remove elements with lower id (key)");
+        helper.add("group_counting_by_population - group elements by population");
+        helper.add("count_by_establishment_date {establishmentDate} - display amount of elements with inserted establishment date");
+        helper.add("count_less_than_establishment_date {establishmentDate} - display amount of elements that have lower value of establishmentDate");
 
     }
 
@@ -90,7 +88,7 @@ public class CollectionManager {
 
                         //Loop for unmarshalling collection
                         while((e = xmlEventReader.peek()) != null ) {
-                            //check the event is a Document start element
+                            //check the event is a Document start element2
                             if(e.isStartElement() && ((StartElement) e).getName().equals(qName)){
                                 //unmarshalling the document
                                 City unmarshalledCity = unmarshaller.unmarshal(xmlEventReader, City.class).getValue();
@@ -170,8 +168,8 @@ public class CollectionManager {
 
     /** Method for printing manual */
     public void help() {
-        for(Map.Entry<String, String> entry : commandsInfo.entrySet()){
-            System.out.println(entry.getKey() + entry.getValue());
+        for(int i = 0; i < helper.size() ; i++){
+            System.out.println(helper.get(i));
         }
     }
 
