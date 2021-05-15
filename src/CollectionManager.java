@@ -32,12 +32,11 @@ public class CollectionManager {
     public static final String DATE_TIME_FORMATTER = "yyyy-MM-dd HH:mm:ss";
     DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(DATE_TIME_FORMATTER);
     DateTimeFormatter formatter = DateTimeFormatter.ofPattern(DATE_FORMATTER);
-
+    /** Manual of commands *new* */
     private final ArrayList<String> helper = new ArrayList<>();
     {
         wasStart = false;
         cities = new HashMap<Long, City>();
-        /** Manual of commands *new* */
         helper.add("help - display help for available commands.");
         helper.add("info - print all information about collection.");
         helper.add("show - print all elements in collection");
@@ -162,7 +161,7 @@ public class CollectionManager {
             System.out.println("You can't write in this file. Try another.");
             return false;
         }
-        System.out.println("File is valid.");
+        //System.out.println("File is valid.");
         return true;
     }
 
@@ -239,7 +238,7 @@ public class CollectionManager {
         for( ; ; ){
             try{
                 Scanner in = new Scanner(System.in);
-                System.out.print("Enter X coordinate in a float type. Value must be greater than -944 and can't be empty.");
+                System.out.println("Enter X coordinate in a float type. Value must be greater than -944 and can't be empty.");
                 float x = in.nextFloat();
                 String strX = Float.toString(x);
                 if(x < -944){
@@ -378,10 +377,6 @@ public class CollectionManager {
             }
             catch(InputMismatchException inputMismatchException){
                 System.out.println("Value must be int-type format.");
-            }
-            catch(NoSuchElementException noSuchElementException){
-                System.out.println("Program was stopped successfully.");
-                System.exit(1);
             }
         }
     }
@@ -596,66 +591,70 @@ public class CollectionManager {
     /** Method for executing from a file */
     public void execute_script (String nameOfFile){
         try{
-            System.out.println("To avoid recursion, your file shouldn't contain execute_script commands.");
             File file = new File(nameOfFile);
             Scanner sc = new Scanner(file);
             String []finalCommand;
             String command;
-            while(sc.hasNextLine()){
-                command = sc.nextLine();
-                finalCommand = command.trim().toLowerCase().split(" ", 2);
-                try {
-                    switch (finalCommand[0]) {
-                        case "help":
-                            help();
-                            break;
-                        case "info":
-                            info();
-                            break;
-                        case "show":
-                            show();
-                            break;
-                        case "insert":
-                            insert();
-                            break;
-                        case "update_id":
-                            update_id(finalCommand[1]);
-                            break;
-                        case "remove_key":
-                            remove_key(finalCommand[1]);
-                            break;
-                        case "clear":
-                            clear();
-                            break;
-                        case "execute_script":
-                            System.out.println("You can't use execute_script command.");
-                            break;
-                        case "exit":
-                            exit();
-                        case "remove_greater":
-                            remove_greater(finalCommand[1]);
-                            break;
-                        case "remove_greater_key":
-                            remove_greater_key(finalCommand[1]);
-                            break;
-                        case "remove_lower_key":
-                            remove_lower_key(finalCommand[1]);
-                            break;
-                        case "group_counting_by_population":
-                            group_counting_by_population();
-                            break;
-                        case "count_by_establishment_date":
-                            count_by_establishment_date();
-                            break;
-                        case "count_less_than_establishment_date":
-                            count_less_than_establishment_date();
-                        default:
-                            System.out.println("Unknown command. Check help for information.");
+            if(!recursionDetector(nameOfFile)){
+                while(sc.hasNextLine()){
+                    command = sc.nextLine();
+                    finalCommand = command.trim().toLowerCase().split(" ", 2);
+                    try {
+                        switch (finalCommand[0]) {
+                            case "help":
+                                help();
+                                break;
+                            case "info":
+                                info();
+                                break;
+                            case "show":
+                                show();
+                                break;
+                            case "insert":
+                                insert();
+                                break;
+                            case "update_id":
+                                update_id(finalCommand[1]);
+                                break;
+                            case "remove_key":
+                                remove_key(finalCommand[1]);
+                                break;
+                            case "clear":
+                                clear();
+                                break;
+                            case "execute_script":
+                                execute_script(finalCommand[1]);
+                                break;
+                            case "exit":
+                                exit();
+                            case "remove_greater":
+                                remove_greater(finalCommand[1]);
+                                break;
+                            case "remove_greater_key":
+                                remove_greater_key(finalCommand[1]);
+                                break;
+                            case "remove_lower_key":
+                                remove_lower_key(finalCommand[1]);
+                                break;
+                            case "group_counting_by_population":
+                                group_counting_by_population();
+                                break;
+                            case "count_by_establishment_date":
+                                count_by_establishment_date();
+                                break;
+                            case "count_less_than_establishment_date":
+                                count_less_than_establishment_date();
+                            default:
+                                System.out.println("Unknown command. Check help for information.");
+                        }
+                    }
+                    catch (ArrayIndexOutOfBoundsException arrayIndexOutOfBoundsException){
+                        System.out.println("Argument of command is absent. Check help for information.");
                     }
                 }
-                catch (ArrayIndexOutOfBoundsException arrayIndexOutOfBoundsException){
-                    System.out.println("Argument of command is absent. Check help for information.");
-                }
+            }
+            else{
+                System.out.println("This script is recursive! Fix the script or use another one.");
             }
         }
         catch(FileNotFoundException noSuchElementException){
@@ -816,6 +815,29 @@ public class CollectionManager {
             System.out.println("Invalid date format.");
             count_less_than_establishment_date();
         }
+    }
+    HashSet<String> suspectedFiles = new HashSet<>();
+    public boolean recursionDetector(String path) throws FileNotFoundException{
+        if(!checkFile(path)) {
+            System.out.println("Script with path: " + path + " is unavailable.");
+            return false;
+        }
+        File file = new File(path);
+        Scanner in = new Scanner(file);
+        String []script_path;
+        String str;
+        while(in.hasNextLine()){
+            str = in.nextLine();
+            script_path = str.trim().toLowerCase().split(" ", 2);
+            if(script_path[0].equals("execute_script") && suspectedFiles.contains(script_path[1])) {
+                return true;
+            }
+            else if(script_path[0].equals("execute_script")){
+                suspectedFiles.add(script_path[1]);
+                recursionDetector(script_path[1]);
+            }
+        }
+        return false;
     }
 }
 
